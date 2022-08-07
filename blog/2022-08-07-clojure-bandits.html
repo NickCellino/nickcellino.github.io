@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Bandits</title>
+    <link rel="stylesheet" href="stylesheets/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/clj-browser-eval@0.0.7/dist/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/scittle@0.2.8/dist/scittle.js" type="application/javascript"></script>
+    <script type="application/x-scittle">
+(defn rand-normal
+  "Generates a sample from a normally distributed random variable
+  from a uniform random variable using the method described
+  here: https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform"
+  []
+  (let [u (.random js/Math)
+        v (.random js/Math)]
+    (* (.sqrt js/Math (* -2 (.log js/Math u)))
+       (.cos js/Math (* 2 (. js/Math -PI) v)))))
+
+(defn sample-normal
+  [mean stddev]
+  (+ (* (rand-normal) stddev) mean))
+
+
+(defn n-armed-bandit
+  [arms]
+  (vec (take arms (repeatedly #(sample-normal 0 1)))))
+
+(def the-bandit (n-armed-bandit 10))
+
+(defn epsilon-greedy-agent
+  "Create an epsilon greedy agent with the specified number of arms
+   and epsilon value. The value estimates for each arm is initialized
+   to 0."
+  [epsilon num-arms]
+  (let [zeros (vec (repeat num-arms 0))]
+    {:epsilon epsilon
+     :pulls-per-arm zeros
+     :value-estimates zeros}))
+
+(defn pull-arm
+  [bandit arm]
+  (let [mean (get bandit arm)]
+    (sample-normal mean 1)))
+
+(defn add-observation
+  "Add an observation to an agent, incrementally updating
+  the value estimate for the specified arm."
+  [agent arm reward]
+  (let [n (inc (get (:pulls-per-arm agent) arm))
+        alpha (/ 1 n)
+        old-value-estimate (get (:value-estimates agent) arm)
+        error (- reward old-value-estimate)]
+    (-> agent
+        (update-in [:pulls-per-arm arm] inc)
+        (update-in [:value-estimates arm] (partial + (* alpha error))))))
+
+(defn argmax
+  "Returns the index of the largest element in values."
+  [values]
+  (let [indexed (map-indexed vector values)
+        ret (apply max-key second indexed)]
+    (first ret)))
+
+(defn choose-arm
+  [agent]
+  (if
+    (< (rand) (:epsilon agent))
+    (rand-int (count (:value-estimates agent)))
+    (argmax (:value-estimates agent))))
+
+(defn do-pull
+  "Performs a single pull on the specified bandit.
+  Returns a vector with two elements:
+    1. the agent (updated with this observation)
+    2. the arm choice
+    3. the reward"
+  [agent bandit]
+  (let [arm-choice (choose-arm agent)
+        reward (pull-arm bandit arm-choice)]
+    [(add-observation agent arm-choice reward)
+     arm-choice
+     reward]))</script>
+  </head>
+  <body>
+    <h1>Multi-armed bandits & Clojure</h1>
+    An exploration of a classic reinforcement learning problem through the lens of Clojure.
+    <div>
+      <h2>Introduction</h2>
+      <p>
+      Recently, I've been learning the programming language <a href="https://clojure.org/">Clojure</a>.
+
+      Clojure is a functional <a href="https://en.wikipedia.org/wiki/Lisp_(programming_language)">Lisp</a>-dialect, hosted on the JVM.
+
+      Clojure's creator, Rich Hickey, has given some really interesting conference talks and like many others, I went down <a href="https://www.youtube.com/watch?v=YR5WdGrpoug&list=PLZdCLR02grLrEwKaZv-5QbUzK0zGKOOcr&ab_channel=ClojureTV">the rabbit hole</a>. 
+
+      His talks resonate with me because he has a way of explaining things about building software I have always felt but never been able to put my finger on. Here's a taste of what I mean:
+      <div>
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/aSEQfqNYNAc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
+      So yeah, I have drunk the Clojure Kool-aid, and it tastes pretty good!
+      </p>
+      <p>
+      My goal in writing this article is to give you a little taste of what Clojure is like by walking through a fun (and interactive!) example problem. If you have never seen Clojure before at all, you may want to check out the <a href="https://clojure.org/guides/learn/clojure">"Learn Clojure" section on clojure.org</a> before reading.
+
+      Let's get started.
+      </p>
+    </div>
+    <div>
+      <h2>Multi-armed Bandit Problem</h2>
+      <p>
+      The problem we will look at is <a href="https://en.wikipedia.org/wiki/Multi-armed_bandit">the multi-armed bandit problem</a>, a classic problem in reinforcement learning. The problem is this:
+      </p>
+      <p>
+      Imagine you are in a casino and there are 3 slot machines in front of you. Each pull of a slot machine is free, and as a result of each pull, you can either win or lose some money. A result of -1 means you lost 1 dollar and a result of 0.5 means you won 50 cents.
+      </p>
+      <p>
+      Now I (a veteran of this particular casino) tell you that these 3 machines are built differently and some are better than others. Inconveniently, I don't remember which one is the best.
+      </p>
+      </p>
+      For example, machine 0 may give you a result of 0.5 <i>on average</i> while machine 1 may give you an average result of -1.5, and machine 2 an average result of 0.75.
+      </p>
+
+      <table>
+        <tbody>
+          <tr>
+            <th>Machine</th>
+            <th>Average Reward</th>
+          </tr>
+          <tr><td>0</td><td>0.5</td></tr>
+          <tr><td>1</td><td>-1.5</td></tr>
+          <tr><td>2</td><td>0.75</td></tr>
+        </tbody>
+      </table>
+
+      <p>
+      You have 100 pulls and your goal is to end up with as much money as possible. <strong>What's your strategy?</strong>
+      </p>
+      <p>
+      Ideally, in the example above, you would like to choose machine 2 for all 100 pulls because it gives the highest reward on average, but the tricky part is that you don't know this information ahead of time. You can only learn which machine is best by trying each one out. And remember, these machines are random, so 1 observation of pulling each one won't necessarily tell you which machine is best. For example, your first few results might look like this:
+      </p>
+
+      <table>
+        <tbody>
+          <tr>
+            <th>Pull Number</th>
+            <th>Machine</th>
+            <th>Reward</th>
+          </tr>
+          <tr><td>0</td><td>0</td><td>0.55</td></tr>
+          <tr><td>1</td><td>1</td><td>-1.4</td></tr>
+          <tr><td>2</td><td>2</td><td>0.5</td></tr>
+        </tbody>
+      </table>
+
+      <p>
+      If, based on these results, you naively concluded that machine 0 is best and decided to choose only machine 0 for the remaining 97 pulls, you would miss out on the higher average rewards from machine 2. On the other hand, if you pull machine 0 33 times, machine 1 33 times, and machine 2 33 times, you will now have a really strong inkling for which machine is the best (machine 2), but now you only have 1 pull left to actually use this knowledge!
+      </p>
+
+      <h3> Exploration vs Exploitation </h3>
+      <p>
+      The fundamental challenge illustrated by this problem is the balancing of exploration (discovering new knowledge) and exploitation (putting your knowledge to use). A good strategy for this problem must balance these in order to earn an optimal reward.
+      </p>
+
+      <p>
+      For example, you could decide that 25% of the time, you will explore (choose a machine randomly) and 75% of the time, you will exploit (choose the machine that you estimate to be the best based on what you've seen so far). Or, you could choose randomly only 10% of the time. Maybe when choosing randomly, you weight the machines based on your estimates of their values. Maybe you want to explore more at the beginning and less at the end.
+      </p>
+
+      <p>
+      Only 1 way to find out! (Okay, fine, I'm sure there's some fancy math things you could do to find out, but we're gonna build some simulations using Clojure.)
+      </p>
+    </div>
+    <div>
+      <h2>Exploring the problem with Clojure</h2>
+
+      <h3>What does a bandit look like?</h3>
+      <p>
+      In our program, we're going to talk about a bandit with N arms: an n-armed bandit. Using this language, the example above would be a 3-armed bandit. For our program, let's consider a 10-armed bandit. We might create a bandit like so:
+      </p>
+
+      <div clj-interpreter>
+        <textarea clj-code rows=22>(defn rand-normal
+  "Generates a sample from a normally distributed random variable
+  from a uniform random variable using the method described
+  here: https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform"
+  []
+  (let [u (.random js/Math)
+        v (.random js/Math)]
+    (* (.sqrt js/Math (* -2 (.log js/Math u)))
+       (.cos js/Math (* 2 (. js/Math -PI) v)))))
+
+(defn sample-normal
+  [mean stddev]
+  (+ (* (rand-normal) stddev) mean))
+
+
+(defn n-armed-bandit
+  [arms]
+  (vec (take arms (repeatedly #(sample-normal 0 1)))))
+
+(def the-bandit (n-armed-bandit 10))
+the-bandit</textarea>
+        <button clj-eval>Evaluate</button>
+        <pre clj-result></pre>
+      </div>
+
+      <p>
+      (Click the "Evaluate" button above to see what this code does.)
+      </p>
+
+      <p>
+      So here we have 3 functions. The first 2 are small utility functions that just help us achieve what we are <i>really</i> trying to implement, the <code>n-armed-bandit</code> function, so I'll ignore those for now. The <code>n-armed-bandit</code> function is what actually creates what we will consider our "bandit". Our bandit can be entirely described by a list of values, each one representing the "average reward" for an arm, so that is what our function returns. Our function takes in the number of arms it needs to generate "average reward" values for. Then, it <code>take</code>s that many samples from the infinite list that results from repeatedly applying our <code>sample-normal</code> function. We convert the resulting list to a vector with <code>vec</code>. <code>vector</code>s are like arrays in other programming languages. These are useful when we want to quickly access an element based on it's index (which will we need to do very shortly).
+      </p>
+
+      <p>
+      The main operation we are concerned with when it comes to bandits is "pull arm". This should simulate pulling a single arm of the bandit and give us back a reward.
+
+       We can implement this like so:
+      </p>
+
+      <div clj-interpreter>
+        <textarea clj-code rows=6>(defn pull-arm
+  [bandit arm]
+  (let [mean (get bandit arm)]
+    (sample-normal mean 1)))
+
+(pull-arm the-bandit 0)</textarea>
+        <button clj-eval>Evaluate</button>
+        <pre clj-result></pre>
+      </div>
+
+      <p>
+      Here, we retrieve the average reward value for the specified arm and return a sample from a normal distribution using that arm's average reward value as the mean. This is where it comes in handy that we can fetch the "average reward" value for an arm of the bandit using its index.
+      </p>
+
+      <p>
+      Press "Evaluate" a few times to pull arm 0 and see what you get!
+      </p>
+
+      <p>
+      Now, if we wrote this correctly, we should be able to see after pulling a certain arm many times, that the rewards average out to the arm's "average reward" value. Let's verify that is true:
+      </p>
+
+      <div clj-interpreter>
+        <textarea clj-code rows=4>(let [random-arm-0-sample (take 1000 (repeatedly #(pull-arm the-bandit 0)))
+      actual-arm-0-value (get the-bandit 0)
+      observed-arm-0-mean (/ (apply + random-arm-0-sample) (count random-arm-0-sample))]
+  (str "Actual arm 0 value: " actual-arm-0-value "\nObserved arm 0 value: " observed-arm-0-mean))</textarea>
+        <button clj-eval>Evaluate</button>
+        <pre clj-result></pre>
+      </div>
+
+      <p>
+      You should be able to see that the actual and observed values for arm 0 are pretty close to one another.
+      </p>
+
+      <h3>Our decision making "agent"</h3>
+      <p>
+      The decision maker in a reinforcement learning problem is usually called an "agent". In this section, we'll start thinking about how our agents will make decisions.
+      </p>
+      <p>
+      As previously discussed, one possible strategy is to choose randomly some percentage (which we'll call epsilon ε) of the time. The rest of the time, we could act "greedily", or choose the arm that we currently think is best. This is called an epsilon-greedy method.
+      </p>
+
+      <p>
+      To perform the "greedy" action, the agent needs to have some estimate of the value of each arm so it can pick the one whose
+      esimate is the highest. The obvious way to accomplish this is to just remember every single observation for each
+      arm, then we can calculate the estimated value for each arm by averaging all of the observations. This would involve
+      repeatedly calculating the mean over all observations for each arm every time we wanted to choose the "best" arm.
+      A more efficient way is to
+      <a href="https://math.stackexchange.com/a/106720">calculate the mean of the observations incrementally</a>.
+      To do this, the agent only needs to know how many times it has pulled an arm and what the current average observation
+      is for that arm.
+      </p>
+
+      <p>
+      With those considerations in mind, we may end up with the follwoing representation for our epsilon greedy agent:
+      </p>
+
+      <div clj-interpreter>
+        <textarea clj-code rows=12>(defn epsilon-greedy-agent
+  "Create an epsilon greedy agent with the specified number of arms
+   and epsilon value. The value estimates for each arm is initialized
+   to 0."
+  [epsilon num-arms]
+  (let [zeros (vec (repeat num-arms 0))]
+    {:epsilon epsilon
+     :pulls-per-arm zeros
+     :value-estimates zeros}))
+  
+(def my-agent (epsilon-greedy-agent 0.5 10))
+my-agent</textarea>
+        <button clj-eval>Evaluate</button>
+        <pre clj-result></pre>
+      </div>
+
+      <p>
+      The two main operations relating to an agent are:
+      <ol>
+        <li>Choose which arm to pull next</li>
+        <li>Update the agent's value estimates with the observed result</li>
+      </ol>
+
+      The first is straightforward:
+
+      <div clj-interpreter>
+        <textarea clj-code rows=18>(defn argmax
+  "Returns the index of the largest element in values."
+  [values]
+  (let [indexed (map-indexed vector values)
+        ret (apply max-key second indexed)]
+    (first ret)))
+
+(defn choose-arm
+  [agent]
+  (if
+    (< (rand) (:epsilon agent))
+    (rand-int (count (:value-estimates agent)))
+    (argmax (:value-estimates agent))))
+
+; An example of choose-arm in action using an agent with epsilon=0.5 who currently
+; thinks arm 0 is the best arm
+(take 10 (repeatedly #(choose-arm {:epsilon 0.5
+                                   :value-estimates [0.75 0 0 0 0 0 0]})))</textarea>
+        <button clj-eval>Evaluate</button>
+        <pre clj-result></pre>
+      </div>
+
+      Let's break down what's happening here. <code>argmax</code> is a function we define that returns the index of the largest
+      element in the input vector. In <code>choose-arm</code>, we first generate a random number between 0 and 1. If that number
+      is below the agent's epsilon, we choose an arm randomly; otherwise, we choose the arm that currently has the highest
+      estimated value. By doing this, we are performing the exploratory action epsilon percentage of the time.
+      </p>
+
+      <p>
+      In the example in the code above, you can see that epsilon is 0.5, which means half the time, we choose randomly and half the time, we choose the arm whose estimate is currently the highest (which is 0 in this example).
+      </p>
+
+      <p>
+      Side note: I have really grown to appreciate the value of dynamic typing when writing little sample scripts like this and
+      even when writing tests in my day job. As you can see above, when I call
+      <code>choose-arm {:epsilon 0.5 :value-estimates [0.75 ...]}</code>
+      I don't bother passing in the <code>:pulls-per-arm [0 0 ...]</code> field that would typically go along with an agent
+      because this function doesn't care about that so why pass it in? I find static typing makes things like this a lot
+      more tedious.
+      </p>
+
+      <p>
+      Now, for updating the agent's value estimates. Clojure discourages state mutation and prefers immutable data, but our
+      agent needs to be able to make observations about the bandits and learn from them.
+      To accomplish this without state mutation, our "update" function will actually just generate a whole new agent,
+      like so:
+      </p>
+
+      <div clj-interpreter>
+        <textarea clj-code rows=23>(defn add-observation
+  "Add an observation to an agent, incrementally updating
+  the value estimate for the specified arm."
+  [agent arm reward]
+  (let [n (inc (get (:pulls-per-arm agent) arm))
+        alpha (/ 1 n)
+        old-value-estimate (get (:value-estimates agent) arm)
+        error (- reward old-value-estimate)]
+    (-> agent
+        (update-in [:pulls-per-arm arm] inc)
+        (update-in [:value-estimates arm] (partial + (* alpha error))))))
+
+
+; Example usage
+(def example-agent {:pulls-per-arm [0 0 0]
+                    :value-estimates [0 0 0]})
+
+(def updated-agent (-> example-agent
+                       (add-observation 0 3)
+                       (add-observation 0 4)
+                       (add-observation 0 4)))
+
+(str "Old agent: " example-agent "\nNew agent: " updated-agent)</textarea>
+        <button clj-eval>Evaluate</button>
+        <pre clj-result></pre>
+      </div>
+      
+      <p>
+      As I discussed above, the agent tracks the average of the rewards seen for each arm in an incremental way.
+      </p>
+
+      <p>
+      Once we calculate the average, we use <code>update-in</code> to update the value estimate for the arm we pulled
+      and <code>update-in</code> again to increment the count value for the arm we pulled. And remember, in Clojure, the
+      core datastructures are immutable so <code>update-in</code> actually returns a new object without affecting the old
+      object.
+      </p>
+
+      <p>
+      Side note: For those of you who are new to Clojure, <code>-&gt;</code> is the <a href="https://clojure.org/guides/threading_macros#thread-first">thread first macro</a> which essentially provides a way to take some value and pass it through a pipeline of
+      functions.
+      </p>
+
+      <p>
+      If you evaluate the code above, you can see that after adding a few observations, we have access to the new updated
+      agent, but our old agent is still perfectly intact. Many proponents of Clojure and functional programming argue that
+      this immutability makes programs a lot simpler. In the paper,
+      "<a href="http://curtclifton.net/papers/MoseleyMarks06a.pdf">Out of the Tar Pit</a>" the authors attempt to identify
+      the primary sources of complexity in software and they identify "state" as one of them. "State" is the reason why
+      "turning it off and on again" is still the most likely resolution to your IT problem (because you are resetting the system's
+      state).
+      </p>
+
+      <h3>Tying it all together</h3>
+
+      <p>
+      Now that we have our bandit and we have our agent, we can write the primary function that ties them both together:
+      </p>
+
+      <div clj-interpreter>
+        <textarea clj-code rows=12>(defn do-pull
+  "Performs a single pull on the specified bandit.
+  Returns a vector with two elements:
+    1. the agent (updated with this observation)
+    2. the arm choice
+    3. the reward"
+  [agent bandit]
+  (let [arm-choice (choose-arm agent)
+        reward (pull-arm bandit arm-choice)]
+    [(add-observation agent arm-choice reward)
+     arm-choice
+     reward]))</textarea>
+        <button clj-eval>Evaluate</button>
+        <pre clj-result></pre>
+      </div>
+
+      <p>
+      Basically, we ask our agent which arm it wants to choose, we pull that arm on the bandit, then we "update" the agent
+      with the new observation. Let's see that in action:
+      </p>
+
+      <div clj-interpreter>
+        <textarea clj-code rows=28>(def epsilon 0.5)
+
+(def agent (epsilon-greedy-agent epsilon 3))
+
+; For simplicity, we'll use the bandit from the initial example instead of generating a random one, but
+; feel free to use a random one like this if you like:
+; (def bandit (n-armed-bandit 3))
+(def bandit [0.5 -1.5 0.75])
+
+
+; Perform 2000 pulls
+(def experiment-results
+  (loop [agent agent
+         results []]
+    (if (= (count results) 2000)
+      results 
+      (let [result (do-pull agent bandit)]
+        (recur (first result) (conj results result))))))
+
+
+(let [total-reward (apply + (map #(get % 2) experiment-results))
+      avg-reward (/ total-reward (count experiment-results))]
+  (str
+    "Bandit: " bandit "\n"
+    "Starting agent: " agent "\n"
+    "Ending agent: " (first (last experiment-results)) "\n\n"
+    "Average reward per pull: " avg-reward "\n"
+    "Total reward: " total-reward))</textarea>
+        <button clj-eval>Evaluate</button>
+        <pre clj-result></pre>
+      </div>
+
+      <p>
+      Here we can see how our epsilon greedy agent actually performs against the bandit that I initially described (I'm using
+      2000 pulls though instead of 100 so the results have less variance).
+
+      As we said before, the optimal strategy would be to pick arm 2 every time. If we somehow knew to do that, we would expect
+      an average reward per pull of 0.75 so we can consider that a benchmark to compare against.
+      </p>
+
+      <p>
+      If you evaluate the code above a few times, I expect you'll see that epsilon=0.5 is not ideal - a bit too much exploring.
+      The agent needs to be more greedy. Try it out for yourself and see what you find!
+      </p>
+
+      <p>
+      Keep in mind, this is only one of many possible strategies for this problem. I would keep going but this post is
+      getting too long.
+      </p>
+
+    </div>
+    <div>
+      <h2>Conclusion</h2>
+
+      <p>
+      I hope the example problem here was a nice showcase of how to use Clojure to solve a 
+      "real" problem - "real" in the sense that it's at least one step above the sort of trivial
+      "generate the fibonacci numbers" examples.
+      </p>
+
+      <p>
+      Clojure is a really fun language and if nothing else, it forces you to think in a different way. It's kinda like lifting
+      weights, but for your brain.
+      </p>
+
+      <p>
+      To be a little more specific though, I think Clojure is valuable because it makes it <strong>easy and practical</strong>
+      to program real applications with immutable data. I think the
+      concept of immutability is starting to creep in everywhere in our industry, and people are starting to
+      understand its value. Some examples are:
+
+      <ul>
+        <li><strong>Git</strong> - immutable versions of your code</li>
+        <li><strong>Docker</strong> - immutable instances of your built application</li>
+        <li><strong>Infrastructure as Code</strong> - immutable versions of your server infrastructure</li>
+        <li><strong>Event sourcing infrastructure</strong> - changes in your application represented as an immutable stream of events</li>
+      </ul>
+
+      I think programming primarily with immutable data in our application code is still pretty niche, but it's only a matter
+      of time before more people start to understand it's value there as well.
+      </p>
+      
+      <p>
+      So yeah, Clojure is pretty cool.
+      </p>
+
+      <p>
+      <a href="https://youtu.be/V1eYniJ0Rnk">And reinforcement learning is cool</a>.
+      </p>
+
+    </div>
+  </body>
+</html>
