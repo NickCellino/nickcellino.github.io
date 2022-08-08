@@ -73,7 +73,7 @@
 
 (defn do-pull
   "Performs a single pull on the specified bandit.
-  Returns a vector with two elements:
+  Returns a vector with three elements:
     1. the agent (updated with this observation)
     2. the arm choice
     3. the reward"
@@ -92,7 +92,7 @@
     </header>
 
     <h1>Multi-armed bandits & Clojure</h1>
-    An exploration of a classic reinforcement learning problem through the lens of Clojure.
+    An (interactive) exploration of a classic reinforcement learning problem through the lens of Clojure.
     <div>
       <h2>Introduction</h2>
       <p>
@@ -102,15 +102,24 @@
 
       Clojure's creator, Rich Hickey, has given some really interesting conference talks and like many others, I went down <a href="https://www.youtube.com/watch?v=YR5WdGrpoug&list=PLZdCLR02grLrEwKaZv-5QbUzK0zGKOOcr&ab_channel=ClojureTV">the rabbit hole</a>. 
 
-      His talks resonate with me because he has a way of explaining things about building software I have always felt but never been able to put my finger on. Here's a taste of what I mean:
+      His talks resonate with me because he has a way of explaining things about building software I have always felt but never been able to put my finger on. Here's a example of what I mean:
       <div>
         <iframe width="560" height="315" src="https://www.youtube.com/embed/aSEQfqNYNAc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
       </div>
       So yeah, I have drunk the Clojure Kool-aid, and it tastes pretty good!
       </p>
       <p>
-      My goal in writing this article is to give you a little taste of what Clojure is like by walking through a fun (and interactive!) example problem. If you have never seen Clojure before at all, you may want to check out the <a href="https://clojure.org/guides/learn/clojure">"Learn Clojure" section on clojure.org</a> before reading.
+      In this article, I'm going to walk you solving an example problem using Clojure.
+      Hopefully, it can be a stepping stone after you get through the basic "hello world" type examples. 
+      I'm going to assume very basic familiarity with the language so if you've never seen Clojure before at all, you may want to check out the <a href="https://clojure.org/guides/learn/clojure">"Learn Clojure" section on clojure.org</a> before reading.
+      </p>
 
+      <p>
+      All the code samples in here are interactive (enabled by <a href="https://github.com/NickCellino/clj-browser-eval">clj-browser-eval</a> and <a href="https://github.com/babashka/scittle">Scittle</a>). Please experiment with them
+      and have some fun.
+      </p>
+
+      <p>
       Let's get started.
       </p>
     </div>
@@ -171,11 +180,14 @@
       </p>
 
       <p>
-      For example, you could decide that 25% of the time, you will explore (choose a machine randomly) and 75% of the time, you will exploit (choose the machine that you estimate to be the best based on what you've seen so far). Or, you could choose randomly only 10% of the time. Maybe when choosing randomly, you weight the machines based on your estimates of their values. Maybe you want to explore more at the beginning and less at the end.
+      For example, you could decide that half the time, you will explore (choose a machine randomly) and half
+      the time, you will exploit (choose the machine that you estimate to be the best based on what you've
+      seen so far). Or maybe you should explore 25% of the time and exploit 75% of the time. You could also
+      use a different strategy entirely.
       </p>
 
       <p>
-      Only 1 way to find out! (Okay, fine, I'm sure there's some fancy math things you could do to find out, but we're gonna build some simulations using Clojure.)
+      Let's build a simulation and test one of these strategies out.
       </p>
     </div>
     <div>
@@ -217,7 +229,7 @@ the-bandit</textarea>
       </p>
 
       <p>
-      So here we have 3 functions. The first 2 are small utility functions that just help us achieve what we are <i>really</i> trying to implement, the <code>n-armed-bandit</code> function, so I'll ignore those for now. The <code>n-armed-bandit</code> function is what actually creates what we will consider our "bandit". Our bandit can be entirely described by a list of values, each one representing the "average reward" for an arm, so that is what our function returns. Our function takes in the number of arms it needs to generate "average reward" values for. Then, it <code>take</code>s that many samples from the infinite list that results from repeatedly applying our <code>sample-normal</code> function. We convert the resulting list to a vector with <code>vec</code>. <code>vector</code>s are like arrays in other programming languages. These are useful when we want to quickly access an element based on it's index (which will we need to do very shortly).
+      So here we have 3 functions. The first 2 are small utility functions that just help us achieve what we are <i>really</i> trying to implement, the <code>n-armed-bandit</code> function, so I'll ignore those for now. The <code>n-armed-bandit</code> function is what actually creates what we will consider our "bandit". Our bandit can be entirely described by a list of values, each one representing the "average reward" for an arm, so that is what our function returns. Our function takes in the number of arms it needs to generate "average reward" values for. Then, it <code>take</code>s that many samples from the infinite list that results from repeatedly applying our <code>sample-normal</code> function. We convert the resulting list to a vector with <code>vec</code>. <code>vector</code>s are like arrays in other programming languages. These are useful when we want to quickly access an element based on it's index (which we will need to do very shortly).
       </p>
 
       <p>
@@ -282,7 +294,7 @@ the-bandit</textarea>
       </p>
 
       <p>
-      With those considerations in mind, we may end up with the follwoing representation for our epsilon greedy agent:
+      With these considerations in mind, we may end up with the following representation for our epsilon greedy agent:
       </p>
 
       <div clj-interpreter>
@@ -345,7 +357,7 @@ my-agent</textarea>
       </p>
 
       <p>
-      Side note: I have really grown to appreciate the value of dynamic typing when writing little sample scripts like this and
+      <strong>Side note:</strong> I have really grown to appreciate the value of dynamic typing when writing little sample scripts like this and
       even when writing tests in my day job. As you can see above, when I call
       <code>choose-arm {:epsilon 0.5 :value-estimates [0.75 ...]}</code>
       I don't bother passing in the <code>:pulls-per-arm [0 0 ...]</code> field that would typically go along with an agent
@@ -400,18 +412,19 @@ my-agent</textarea>
       </p>
 
       <p>
-      Side note: For those of you who are new to Clojure, <code>-&gt;</code> is the <a href="https://clojure.org/guides/threading_macros#thread-first">thread first macro</a> which essentially provides a way to take some value and pass it through a pipeline of
+      <strong>Side note:</strong> For those of you who are new to Clojure, <code>-&gt;</code> is the <a href="https://clojure.org/guides/threading_macros#thread-first">thread first macro</a> which essentially provides a way to take some value and pass it through a pipeline of
       functions.
       </p>
 
       <p>
-      If you evaluate the code above, you can see that after adding a few observations, we have access to the new updated
+      <strong>A note on immutability:</strong> If you evaluate the code above, you can see that after adding a few observations, we have access to the new updated
       agent, but our old agent is still perfectly intact. Many proponents of Clojure and functional programming argue that
-      this immutability makes programs a lot simpler. In the paper,
-      "<a href="http://curtclifton.net/papers/MoseleyMarks06a.pdf">Out of the Tar Pit</a>" the authors attempt to identify
+      this immutability makes programs a lot simpler. In the paper
+      "<a href="http://curtclifton.net/papers/MoseleyMarks06a.pdf">Out of the Tar Pit</a>," the authors attempt to identify
       the primary sources of complexity in software and they identify "state" as one of them. "State" is the reason why
-      "turning it off and on again" is still the most likely resolution to your IT problem (because you are resetting the system's
-      state).
+      "turning it off and on again" is still the most likely resolution to your IT problem in 2022 (because you are resetting the system's
+      state). And as you can see from the example above, Clojure encourages us and enables us to avoid state in
+      many circumstances.
       </p>
 
       <h3>Tying it all together</h3>
@@ -421,16 +434,17 @@ my-agent</textarea>
       </p>
 
       <div clj-interpreter>
-        <textarea clj-code rows=12>(defn do-pull
+        <textarea clj-code rows=13>(defn do-pull
   "Performs a single pull on the specified bandit.
-  Returns a vector with two elements:
+  Returns a vector with three elements:
     1. the agent (updated with this observation)
     2. the arm choice
     3. the reward"
   [agent bandit]
   (let [arm-choice (choose-arm agent)
-        reward (pull-arm bandit arm-choice)]
-    [(add-observation agent arm-choice reward)
+        reward (pull-arm bandit arm-choice)
+        updated-agent (add-observation agent arm-choice reward)]
+    [updated-agent
      arm-choice
      reward]))</textarea>
         <button clj-eval>Evaluate</button>
@@ -453,11 +467,11 @@ my-agent</textarea>
 (def bandit [0.5 -1.5 0.75])
 
 
-; Perform 2000 pulls
+; Perform 1000 pulls
 (def experiment-results
   (loop [agent agent
          results []]
-    (if (= (count results) 2000)
+    (if (= (count results) 1000)
       results 
       (let [result (do-pull agent bandit)]
         (recur (first result) (conj results result))))))
@@ -477,7 +491,7 @@ my-agent</textarea>
 
       <p>
       Here we can see how our epsilon greedy agent actually performs against the bandit that I initially described (I'm using
-      2000 pulls though instead of 100 so the results have less variance).
+      1000 pulls though instead of 100 so the results have less variance).
 
       As we said before, the optimal strategy would be to pick arm 2 every time. If we somehow knew to do that, we would expect
       an average reward per pull of 0.75 so we can consider that a benchmark to compare against.
@@ -485,7 +499,7 @@ my-agent</textarea>
 
       <p>
       If you evaluate the code above a few times, I expect you'll see that epsilon=0.5 is not ideal - a bit too much exploring.
-      The agent needs to be more greedy. Try it out for yourself and see what you find!
+      The agent needs to be more greedy. Try it out for yourself and see if you can find an epsilon value that works better!
       </p>
 
       <p>
@@ -533,6 +547,17 @@ my-agent</textarea>
       <a href="https://youtu.be/V1eYniJ0Rnk">And reinforcement learning is cool</a>.
       </p>
 
+      <p>
+      And if you made it this far, thanks for reading!
+      </p>
     </div>
+
+    <div>
+      <h2>References</h2>
+      <ul>
+        <li><a href="https://mitpress.mit.edu/books/reinforcement-learning">Reinforcement Learning: An Introduction (Second Edition)</a></li>
+      </ul>
+    </div>
+
   </body>
 </html>
