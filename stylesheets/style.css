@@ -59,3 +59,23 @@ table, th, td {
 [clj-interpreter], [clj-code] {
   width: 100%;
 }
+
+.site-menu {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.site-menu li {
+  display: inline;
+  padding: 8px;
+}
+
+.site-menu a {
+  text-decoration: none;
+  font-weight: lighter;
+}
+
+.home-link a {
+  color: #000;
+}
