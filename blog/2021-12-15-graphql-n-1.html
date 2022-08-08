@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>GraphQL and N+1 Problem</title>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+  </head>
+  <body>
+    <header>
+      <ul class="site-menu">
+        <li class="nav-link"><a href="/">Nick Cellino</a></li>
+      </ul>
+    </header>
+
+    <h1>GraphQL, The N+1 Problem, and You</h1>
+
+    <div>
+      <h2>GraphQL</h2>
+      <p>
+      Recently, I’ve been learning about <a href="https://graphql.org/">GraphQL</a>. For those who don’t know, GraphQL is a query language for APIs. It essentially allows a frontend to query a backend service as if it were querying a database. This is nice because it lets your frontend request only the data that it needs for each individual page.
+      </p>
+      <p>
+      For example, if we were making a blog platform, our frontend would need a page to display a list of posts, each of which has an author. A GraphQL query for the latest 100 posts might look something this:
+      </p>
+
+      <pre>query {
+    posts(orderBy: "createdAt", limit: 100) {
+        id
+        createdAt
+        title
+        content
+        author {
+            id
+            name
+        }
+    }
+}
+      </pre>
+
+      <p>
+      On the backend, this would be implemented through the use of resolver functions. In Javascript:
+      </p>
+
+      <pre>async posts(orderBy, limit) {
+    return await db.getPosts(orderBy, limit)
+}
+
+async author(post) {
+    return await db.getAuthor(post.authorId)
+}</pre>
+      <p>
+      You may notice that for a list of 100 posts, this would trigger 101 SQL queries- 1 for the list of posts, then 1 for each author on each post. This is known as <a href="https://stackoverflow.com/questions/97197/what-is-the-n1-selects-problem-in-orm-object-relational-mapping">the N+1 problem</a> because we have N + 1 queries (where N is the number of posts)- it typically comes up when talking about ORMs, but it’s the same problem here.
+      </p>
+
+      <h2>The N+1 Problem</h2>
+
+      <p>
+      I really liked the idea of GraphQL as it seemed to solve a lot of the problems I have traditionally had when writing APIs, but I never dug very deep into it because it seemed so inefficient.
+      </p>
+
+      <p>
+      For me, the “aha” moment was reading about <a href="https://github.com/graphql/dataloader">dataloader</a>. This is a pattern/software package/idea which lets you write code in a similar style to the code above, but behind the scenes, it batches up all of your author queries. All you need to do is tell it how to load a list of authors given a list of author ids. This would look something like:
+      </p>
+
+      <pre>authorDataloader = new Dataloader(keys => db.getAuthorWhereIdIn(keys))
+
+async author(post) {
+    return await authorDataloader.load(post.authorId)
+}</pre>
+      <p>
+      Cool! Now we get the same functionality as above with only 2 SQL queries. But we are still doing 2 database queries for what could have been done with 1 that uses a <a href="https://www.w3schools.com/sql/sql_join.asp">SQL JOIN</a>. Could we have just done a JOIN with authors in our “posts” resolver? Sure, but then we are doing a JOIN for any posts query when the querier may not always care about authors. We could also try to get clever and inspect the GraphQL query to see if the querier does want authors and only JOIN with authors if they do, but that’s more code and is starting to muck up our resolver.
+      </p>
+
+      <p>
+      So there are some benefits to doing it this way, but what is the performance cost?
+      </p>
+
+      <h2>SQL Joins vs In-app Joins</h2>
+
+      <p>
+      What this really comes down to is: SQL Joins vs In-app Joins. I’m curious to see what the performance difference is between doing a join in SQL vs implementing this join in application code, which is what the dataloader pattern is doing behind the scenes. I suspect that the SQL join will be slightly more efficient, but I expect the difference will be small enough that it won’t matter for most use cases.
+      </p>
+
+      <h3>Experiment Setup</h3>
+      <p>
+      To test this, I made a script which builds a PostgreSQL database on my laptop with posts and users, runs each type of query (db vs in-app) against the local database and times it. Each post has an author.
+      </p>
+
+      <p>
+      To test the SQL Join, the query I am testing selects every post and joins it with its author:
+      </p>
+
+      <pre>SELECT post.id, user.name FROM post LEFT JOIN user ON user.id = post.authorId;</pre>
+      <p>
+      To implement this in application code, first, I select every post and its authorId like so:
+      </p>
+      <pre>SELECT post.id, post.authorId FROM post;</pre>
+
+      <p>Then, in my code, I gathered each authorId in a list, then issued a “WHERE IN” query to the DB like so:</p>
+
+      <pre>SELECT user.id, user.name FROM user WHERE user.id IN (&lt;authorIds&gt;);</pre>
+
+      <p>
+      That gave me a list of (user.id, user.name) tuples, from which I created a hash map of id -&gt; name. Then, I iterated through each post and joined it with its author in my hash map.
+      </p>
+
+      <p>
+      You can find the full code I used here: <a href="https://github.com/NickCellino/in-app-vs-db-joins">https://github.com/NickCellino/in-app-vs-db-joins</a>.
+      </p>
+
+      <p>
+      So how did each perform?
+      </p>
+
+      <img width="640" height="396" src="/images/DB-vs-In-app-Joins.webp">
+      <img width="485" height="300" src="/images/Dataset-Size-DB-Time-ms-and-In-app-Time-ms.webp">
+
+      <p>
+      (Note: “Dataset size” refers to the number of posts and users I created. In other words, dataset size = 1000 means I created 1000 posts and 1000 users)
+      </p>
+
+      <p>
+      As expected, letting the database perform the joins was more efficient. Doing the join in-app was slower by a factor of about 2.5. This will likely only be painful as you get into >100,000 row territory, as you can see. Ideally, you can do some filtering on your data before that so you don’t need to join so many rows.
+      </p>
+
+      <h2>Wrapping up</h2>
+
+      <p>
+      Though these results were predictable, it’s still nice to have quantified this and now, I have some concrete data to reason from. For most use cases, I think the code-cleanliness and flexibility of in-app joins will outweigh the slight performance penalty, but there will be obvious exceptions and cases where every last bit of performance is important.
+      </p>
+
+      <p>
+      Personally, I really like GraphQL and think the dataloader pattern is extremely clever and useful. Trying to write code that minimizes the number of SQL queries is often at odds with writing code that is simple to reason about and change. Dataloader provides an API that makes it easy to write code that is <i>reasonably</i> efficient as well as extremely simple and readable.
+      </p>
+    </div>
+  </body>
+</html>
