@@ -6,6 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Nick Cellino's Website</title>
     <link rel="stylesheet" href="/stylesheets/style.css">
+    <script src="https://unpkg.com/htmx.org@1.8.0"></script>
   </head>
   <body>
     <header>
@@ -44,6 +45,7 @@
     <ul>
       <li><a href="https://github.com/NickCellino">Github</a></li>
       <li><a href="https://www.linkedin.com/in/nicholas-cellino-353a128a">LinkedIn</a></li>
+      <li hx-get="/email" hx-trigger="mouseenter, load delay:10s" hx-swap="outerHTML">Email: [Hover over me]</li>
     </ul>
 
   </body>
