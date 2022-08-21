@@ -13,19 +13,14 @@
   <body>
     <h1>Hello</h1>
     <!--    <form action="/comments" id="demo-form" method="post"> -->
-      <form id="demo-form" hx-post="/comments" hx-swap="afterbegin" hx-target="#comments">
-      <label for="name">Name</label>
-      <input type="text" name="name">
-      <label for="message">Message</label>
-      <input type="text" name="message">
-      <button type="submit">submit</button>
+    <!--    <form id="comment-form" hx-get="/comments-form" hx-swap="outerHTML" hx-trigger="load"></form> -->
+      <form id="comment-form" hx-get="/comments-form" hx-trigger="load"></form>
 <!--      <button
           type="submit"
           class="g-recaptcha" 
           data-sitekey='6LcMAZQhAAAAAJKuFrianjr-xP8XIOysos4qeR4S'
           data-callback='onSubmit' 
           data-action='submit'>Submit</button> -->
-    </form>
 
     <div id="comments-section">
       <h2>Comments</h2>
