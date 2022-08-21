@@ -1,0 +1,34 @@
+<html>
+  <head>
+    <script src="https://www.google.com/recaptcha/api.js"></script>
+     <script>
+       function onSubmit(token) {
+         console.log("GOT TOKEN", token);
+         document.getElementById("demo-form").submit();
+       }
+     </script>
+     <script src="https://unpkg.com/htmx.org@1.8.0"></script>
+  </head>
+  <body>
+    <h1>Hello</h1>
+    <!--    <form action="/comments" id="demo-form" method="post"> -->
+      <form id="demo-form" hx-post="/comments" hx-swap="afterbegin" hx-target="#comments">
+      <label for="name">Name</label>
+      <input type="text" name="name">
+      <label for="message">Message</label>
+      <input type="text" name="message">
+      <button type="submit">submit</button>
+<!--      <button
+          type="submit"
+          class="g-recaptcha" 
+          data-sitekey='6LcMAZQhAAAAAJKuFrianjr-xP8XIOysos4qeR4S'
+          data-callback='onSubmit' 
+          data-action='submit'>Submit</button> -->
+    </form>
+
+    <div id="comments">
+    </div>
+
+  </body>
+
+</html>
