@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Ibarra+Real+Nova:ital,wght@0,400;0,600;1,400;1,600&family=Mukta:wght@300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Ibarra+Real+Nova:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Mukta:wght@200;300;400;500&display=swap');
 
 /* text */
 body {
@@ -79,3 +79,13 @@ table, th, td {
 .nav-link a {
   color: #000;
 }
+
+.comment {
+  border-bottom: 2px solid #DAF5FF;
+}
+
+.comment .name, .datetime {
+  font-family: "Mukta", "Helvetica", "Arial", sans-serif;
+  font-weight: lighter;
+}
+

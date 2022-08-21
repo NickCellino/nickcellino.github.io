@@ -11,7 +11,9 @@ const comments = [
 ]
 
 const commentToHtml = (comment) => {
-  const authorHtml = comment.name ? `<p class="name">${comment.name}</p>` : '';
+  const authorHtml = comment.name ?
+    `<p class="name">${comment.name}</p>` :
+    `<p class="name">Anonymous</p>`;
 
   return `\
 <div class="comment">
@@ -47,6 +49,12 @@ app.use('/static', express.static('../'));
 app.use(express.urlencoded({
     extended: true
 }))
+
+app.get('/comments', (req, res) => {
+  const response = comments.map(commentToHtml).join('\n');
+  console.log('comments response', response);
+  res.send(response);
+})
 
 app.post('/comments', (req, res) => {
   //const token = req.body['g-recaptcha-response'];

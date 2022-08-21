@@ -7,7 +7,8 @@
          document.getElementById("demo-form").submit();
        }
      </script>
-     <script src="https://unpkg.com/htmx.org@1.8.0"></script>
+     <script src="https://unpkg.com/htmx.org@1.8.0" async></script>
+     <link rel="stylesheet" href="/stylesheets/style.css">
   </head>
   <body>
     <h1>Hello</h1>
@@ -26,9 +27,26 @@
           data-action='submit'>Submit</button> -->
     </form>
 
-    <div id="comments">
+    <div id="comments-section">
+      <h2>Comments</h2>
+      <div id="comments">
+        <div class="comment">
+          <p class="name">Anonymous said...</p>
+          <p class="message">This was a cool post!</p>
+          <p class="datetime">2:40 PM, August 8, 2022</p>
+        </div>
+        <div class="comment">
+          <p class="name">Nick Cellino said...</p>
+          <p class="message">This was really thoughtful and insightful.</p>
+          <p class="datetime">1:30 PM, August 7, 2022</p>
+        </div>
+        <div class="comment">
+          <p class="name">Jeffrey Bezos said...</p>
+          <p class="message">Nice work. I enjoyed the part where you said some of those things.</p>
+          <p class="datetime">8:40 PM, August 3, 2022</p>
+        </div>
+      </div>
     </div>
 
   </body>
-
 </html>
