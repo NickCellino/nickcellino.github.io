@@ -3,22 +3,30 @@
 const comments = [
   {
     name: 'Nick',
-    message: 'Hi there, hope you are well'
+    message: 'Hi there, hope you are well',
+    datetime: '2:40 PM, August 8, 2022'
   },
   {
-    message: 'I am anonymous'
+    message: 'This was really thoughtful and insightful.',
+    datetime: '1:30 PM, August 7, 2022'
+  },
+  {
+    name: 'Jeffry Bezos',
+    message: 'Nice work. I enjoyed the part where you said some of those things.',
+    datetime: '8:40 PM, August 3, 2022'
   }
+
 ]
 
 const commentToHtml = (comment) => {
-  const authorHtml = comment.name ?
-    `<p class="name">${comment.name}</p>` :
-    `<p class="name">Anonymous</p>`;
+  const authorHtml = 
+    `<p class="name"><strong>${comment.name ? comment.name : 'Anonymous'}</strong> said...</p>`;
 
   return `\
 <div class="comment">
   ${authorHtml}
   <p class="message">${comment.message}</p>
+  <p class="datetime">${comment.datetime}</p>
 </div>`
 }
 
@@ -40,16 +48,6 @@ const express = require('express')
 
 const app = express()
 
-app.get('/', (req, res) => {
-  res.redirect('http://localhost:3000/static/test-page.html');
-})
-
-app.use('/static', express.static('../'));
-
-app.use(express.urlencoded({
-    extended: true
-}))
-
 app.get('/comments', (req, res) => {
   const response = comments.map(commentToHtml).join('\n');
   console.log('comments response', response);
@@ -70,6 +68,12 @@ ${newCommentForm}
 ${commentHtml}`
   res.send(responseHtml);
 })
+
+app.use('/', express.static('../'));
+
+app.use(express.urlencoded({
+    extended: true
+}))
 
 app.listen(3000, () => {
   console.log('express app listening on port 3000...');
