@@ -93,6 +93,7 @@
     [(add-observation agent arm-choice reward)
      arm-choice
      reward]))</script>
+    <script src="https://unpkg.com/htmx.org@1.8.0" async></script>
   </head>
   <body>
     <header>
@@ -568,6 +569,12 @@ my-agent</textarea>
         <li><a href="https://mitpress.mit.edu/books/reinforcement-learning">Reinforcement Learning: An Introduction (Second Edition)</a></li>
       </ul>
     </div>
+
+    <h2>Leave a comment</h2>
+    <form id="comment-form" hx-get="https://q79hj072qf.execute-api.us-east-1.amazonaws.com/comments-form?post-id=clojure-bandits" hx-trigger="load"></form>
+
+    <h2>Comments</h2>
+    <div id="comments-list" hx-get="https://q79hj072qf.execute-api.us-east-1.amazonaws.com/comments?post-id=clojure-bandits" hx-swap"innerHTML" hx-trigger="load"></div>
 
   </body>
 </html>
