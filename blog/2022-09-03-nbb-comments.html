@@ -61,7 +61,7 @@
     <h2> How it works </h2>
 
     <p>
-    The comments service runs on an AWS Lambda function. The Lambda runs ClojureScript code which is made possible by <a href="https://github.com/babashka/nbb">nbb</a>. nbb makes it possible to execute ClojureScript within a NodeJS environment and with some <a href="https://blog.michielborkent.nl/aws-lambda-nbb.html">very simple wiring up</a>, you can run this in a Lambda function. The Lambda function interacts with a database in DynamoDB in order to store and retrieve comments, grouped by their blog post ids.
+    The comments service runs on an AWS Lambda function, using ClojureScript and <a href="https://github.com/babashka/nbb">nbb</a>. nbb makes it possible to execute ClojureScript within a NodeJS environment and with some <a href="https://blog.michielborkent.nl/aws-lambda-nbb.html">very simple wiring up</a>, you can run this in a Lambda function. The Lambda function interacts with a database in DynamoDB in order to store and retrieve comments, grouped by their blog post ids.
     </p>
 
     <h3>Express & htmx</h3>
