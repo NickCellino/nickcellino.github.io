@@ -128,7 +128,7 @@
   "Retrieves a list of comments as HTML."
   [config post-id]
   (promesa/let [cmts (comments-repo/get-comments config post-id)
-          html-comments (map serialize-comment cmts)]
+                html-comments (map serialize-comment cmts)]
     (hiccup/html html-comments)))</pre>
     </p>
 
@@ -155,14 +155,14 @@
   [_ post-id]
   (list-comments post-id))</pre>
 
-    The DynamoDB implementation of this obviously has to do a little more work, and this approach made it was easy to swap that in once I was ready to focus on that part.
+    The DynamoDB implementation of this obviously has to do a little more work, and this approach made it easy to swap that in once I was ready to focus on that part.
     </p>
 
     <p>
 
     <h3> Recaptcha </h3>
     <p>
-      I used <a href="https://developers.google.com/recaptcha/docs/v3">Google reCAPTCHA v3</a> in order to try to thwart bot abuse in a way that is not annoying to normal users. reCAPTCHA v3 is nice because it does not require any action on the part of the user- it all happens in the background. When the user tries to save a comment, the frontend submits a reCAPTCHA token with the request. If the reCAPTCHA score is below a certain threshold, the backend responds with an error and doesn't save the comment.
+      I used <a href="https://developers.google.com/recaptcha/docs/v3">Google reCAPTCHA v3</a> to try to thwart bot abuse in a way that is not annoying to normal users. reCAPTCHA v3 is nice because it does not require any action on the part of the user- it all happens in the background. When the user tries to save a comment, the frontend submits a reCAPTCHA token with the request. If the reCAPTCHA score is below a certain threshold, the backend responds with an error and doesn't save the comment.
     </p>
 
     <h3>Closing thoughts</h3>
