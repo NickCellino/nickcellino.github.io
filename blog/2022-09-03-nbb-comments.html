@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-9LDVDDF715"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-9LDVDDF715');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Implementing Comments with nbb</title>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+    <script src="https://unpkg.com/htmx.org@1.8.0" async></script>
+  </head>
+  <body>
+    <header>
+      <ul class="site-menu">
+        <li class="nav-link"><a href="/">Nick Cellino</a></li>
+      </ul>
+    </header>
+
+    <h1>
+      Implementing a comments feature for my blog with nbb, htmx, Serverless Framework, and DynamoDB
+    </h1>
+
+    <p>
+    TLDR: here's the <a href="https://github.com/NickCellino/nbb-comments">repo</a>. Usage instructions are in the README. Scroll down to the end of this post to see the comments feature in action.
+    </p>
+
+    <p>
+      Recently, I've been trying to work on writing more (on this blog in particular). I thought it would be more fun and interactive if people could leave comments on my posts. I know, very novel. 
+    </p>
+
+    <p>
+      I've also been trying to learn and get better at Clojure so I thought "why not build my own comments feature in Clojure, then write about it on my blog?". So that's what I did.
+    </p>
+
+    <h2> My Goals </h2>
+    <ol>
+      <li>
+        Build a comments feature that is easy to integrate into my website, which is hosted on Github pages and does not have a dedicated backend
+      </li>
+      <li>
+        Allow users to leave comments easily (without making an account or requiring social login or anything like that)
+      </li>
+      <li>
+        Implement some mechanism to prevent bots from sending in spam comments
+      </li>
+    </ol>
+
+    <p>
+      I'm aware that without logins, users can easily spam me with excessive comments and lie about who they are. We'll see if that becomes a problem. But if we can't trust anonymous strangers on the internet, then who can we trust, really?
+    </p>
+
+    <h2> How it works </h2>
+
+    <p>
+    The comments service runs on an AWS Lambda function. The Lambda runs Clojurescript code which is made possible by <a href="https://github.com/babashka/nbb">nbb</a>. The Lambda function interacts with a database in DynamoDB in order to store and retrieve comments, grouped by their blog post ids.
+    </p>
+
+    <p>
+    I used <a href="https://htmx.org/">htmx</a> to make the frontend interactive and dynamic without having to write any sort of frontend DOM-manipulation JS. (I highly recommend you check out htmx if you've never heard of it. It's sort of an alternative to the React/Angular/Vue style SPA frameworks everyone is using these days for building dynamic frontend applications. <a href="https://htmx.org/essays/">Their essays</a> are also really good reads from the few I've read so far.)
+    </p>
+
+    <p>
+    The way that works is basically: the form on the frontend, configured with htmx, makes AJAX requests to the backend Lambda function which responds with HTML. The htmx attributes in the HTML tell htmx what should be done with the HTML response- when a new comment is added for example, the resulting HTML from the backend simply gets added to the <i>div</i> with id <i>#comments-list</i>.
+    </p>
+
+    <p>
+    I used <a href="https://expressjs.com/">express</a> in my Lambda to handle routing requests to the few different endpoints that I have setup:
+      <ol>
+        <li> <strong>GET /comments-form?post-id=[post_id]</strong>: returns the HTML for the "add a comment" form </li>
+        <li> <strong>GET /comments?post-id=[post_id]</strong>: returns the list of comments for the specified blog post, rendered as HTML </li>
+        <li> <strong>POST /comments</strong>: saves a comment to DynamoDB and returns the newly saved comment, rendered as HTML </li>
+      </ol>
+    </p>
+
+    <p>
+      I used <a href="https://developers.google.com/recaptcha/docs/v3">Google reCAPTCHA v3</a> in order to try to thwart bot abuse in a way that is not annoying to normal users. reCAPTCHA v3 is nice because it does not require any action on the part of the user- it all happens in the background. When the user tries to save a comment, the frontend submits a reCAPTCHA token with the request. If the reCAPTCHA score is below a certain threshold, the backend responds with an error and doesn't save the comment.
+    </p>
+
+    <p>
+    All of the AWS configuration for this is nicely packaged up in a <code>serverless.yml</code> file (used by Serverless Framework) so you can easily deploy the whole thing with <code>npx serverless deploy</code>.
+    </p>
+
+    <p>
+      And that's pretty much how it works. Check out the code <a href="https://github.com/NickCellino/nbb-comments">here</a> if you want to dig into the nitty gritty. There's instructions in there for how you can deploy it in your own AWS environment and/or run it locally.
+    </p>
+
+    <h2>Leave a comment</h2>
+    <form id="comment-form" hx-get="https://q79hj072qf.execute-api.us-east-1.amazonaws.com/comments-form?post-id=nbb-comments" hx-trigger="load"></form>
+
+    <h2>Comments</h2>
+    <div id="comments-list" hx-get="https://q79hj072qf.execute-api.us-east-1.amazonaws.com/comments?post-id=nbb-comments" hx-swap"innerHTML" hx-trigger="load"></div>
+
+  </body>
+</html>
+
+
+

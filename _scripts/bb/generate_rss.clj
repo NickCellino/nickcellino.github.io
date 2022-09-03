@@ -9,6 +9,14 @@
   (rss/channel-xml {:title "Nick Cellino's Website"
                     :link "https://nickcellino.com"
                     :description "Building simpler software."}
+
+                   {:title "nbb comments"
+                    :guid "https://nickcellino.com/blog/2022-09-03-nbb-comments.html"
+                    :link "https://nickcellino.com/blog/2022-09-03-nbb-comments.html"
+                    :pubDate (date 2022 9 3)
+                    :description (str "Implementing a comments feature for my blog with nbb, htmx, Serverless "
+                                      "Framework, and DynamoDB")}
+
                    {:title "Clojure Bandits"
                     :guid "https://nickcellino.com/blog/2022-08-07-clojure-bandits.html"
                     :link "https://nickcellino.com/blog/2022-08-07-clojure-bandits.html"
