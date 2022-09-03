@@ -30,7 +30,7 @@
     </h1>
 
     <p>
-    TLDR: here's the <a href="https://github.com/NickCellino/nbb-comments">repo</a>. Usage instructions are in the README. Scroll down to the end of this post to see the comments feature in action.
+    TLDR: here's the repo <a href="https://github.com/NickCellino/nbb-comments">https://github.com/NickCellino/nbb-comments</a>. Usage instructions are in the README. Scroll down to the end of this post to see the comments feature in action.
     </p>
 
     <p>
@@ -55,22 +55,16 @@
     </ol>
 
     <p>
-      I'm aware that without logins, users can easily spam me with excessive comments and lie about who they are. We'll see if that becomes a problem. But if we can't trust anonymous strangers on the internet, then who can we trust, really?
+      I'm aware that without logins, normal users can easily spam me with excessive comments and lie about who they are. We'll see if that becomes a problem. But if we can't trust anonymous strangers on the internet, then who can we trust, really?
     </p>
 
     <h2> How it works </h2>
 
     <p>
-    The comments service runs on an AWS Lambda function. The Lambda runs Clojurescript code which is made possible by <a href="https://github.com/babashka/nbb">nbb</a>. The Lambda function interacts with a database in DynamoDB in order to store and retrieve comments, grouped by their blog post ids.
+    The comments service runs on an AWS Lambda function. The Lambda runs ClojureScript code which is made possible by <a href="https://github.com/babashka/nbb">nbb</a>. nbb makes it possible to execute ClojureScript within a NodeJS environment and with some <a href="https://blog.michielborkent.nl/aws-lambda-nbb.html">very simple wiring up</a>, you can run this in a Lambda function. The Lambda function interacts with a database in DynamoDB in order to store and retrieve comments, grouped by their blog post ids.
     </p>
 
-    <p>
-    I used <a href="https://htmx.org/">htmx</a> to make the frontend interactive and dynamic without having to write any sort of frontend DOM-manipulation JS. (I highly recommend you check out htmx if you've never heard of it. It's sort of an alternative to the React/Angular/Vue style SPA frameworks everyone is using these days for building dynamic frontend applications. <a href="https://htmx.org/essays/">Their essays</a> are also really good reads from the few I've read so far.)
-    </p>
-
-    <p>
-    The way that works is basically: the form on the frontend, configured with htmx, makes AJAX requests to the backend Lambda function which responds with HTML. The htmx attributes in the HTML tell htmx what should be done with the HTML response- when a new comment is added for example, the resulting HTML from the backend simply gets added to the <i>div</i> with id <i>#comments-list</i>.
-    </p>
+    <h3>Express & htmx</h3>
 
     <p>
     I used <a href="https://expressjs.com/">express</a> in my Lambda to handle routing requests to the few different endpoints that I have setup:
@@ -79,18 +73,105 @@
         <li> <strong>GET /comments?post-id=[post_id]</strong>: returns the list of comments for the specified blog post, rendered as HTML </li>
         <li> <strong>POST /comments</strong>: saves a comment to DynamoDB and returns the newly saved comment, rendered as HTML </li>
       </ol>
+
+      The code to set that up looks something like this:
+      <pre>(ns express
+  (:require ["express$default" :as express]))
+
+(defn create-app
+  [{:keys [allowed-origin-url] :as config}]
+  (let [app (express)]
+    (.use app (.urlencoded express #js {:extended true}))
+    (.use app (fn [_ res next]
+                (doto res
+                  (.set "Access-Control-Allow-Origin" allowed-origin-url)
+                  (.set "Access-Control-Allow-Methods" "GET, POST")
+                  (.set "Access-Control-Allow-Headers" "hx-trigger, hx-target, hx-request, hx-current-url"))
+                (next)))
+
+    (.get app "/comments" (get-comments-handler config))
+    (.post app "/comments" (post-comment-handler config))
+    (.get app "/comments-form" (get-comments-form-handler config))
+
+    app))</pre>
     </p>
 
+    <p>
+    I used <a href="https://htmx.org/">htmx</a> to make the frontend interactive and dynamic without having to write any sort of frontend DOM-manipulation JS. (I highly recommend you check out htmx if you've never heard of it. It's sort of an alternative to the React/Angular/Vue style SPA frameworks everyone is using these days for building dynamic frontend applications. <a href="https://htmx.org/essays/">Their essays</a> are also really good reads from the few I've read so far.)
+    </p>
+
+    <p>
+    The way that works is basically: certain elements of the DOM are marked with <code>hx-&ltattr&gt</code> which give them certain dynamic properties. For example, in our HTML, where we want to load in the comments list, we add:
+
+    <pre>&lt;div
+  id=&quot;comments-list&quot;
+  hx-get=&quot;http://localhost:3000/comments?post-id=example-post-id&quot;
+  hx-swap=&quot;innerHTML&quot;
+  hx-trigger=&quot;load&quot;&gt;
+&lt;/div&gt;</pre>
+
+    This says, "on page load, do an HTTP GET to 'http://localhost:3000/comments?post-id=example-post-id' and replace the innerHTML of this div with what comes back".
+    </p>
+    <p>
+    The <code>get-comments-handler</code> function from our express example above delegates that request to a function that looks like <code>get-comments</code> below:
+    <pre>(defn serialize-comment
+  [comment-body]
+  (let [author (if (any [nil? empty?] (:author comment-body))
+                 "Anonymous"
+                 (:author comment-body))
+        author-section [:p {:class "name"} [:strong author] "said..."]
+        message-section [:p {:class "message"} (:message comment-body)]
+        date-section [:p {:class "datetime"} (format-iso-date (:time comment-body))]]
+    [:div {:class "comment"} author-section message-section date-section]))
+
+(defn get-comments
+  "Retrieves a list of comments as HTML."
+  [config post-id]
+  (promesa/let [cmts (comments-repo/get-comments config post-id)
+          html-comments (map serialize-comment cmts)]
+    (hiccup/html html-comments)))</pre>
+    </p>
+
+    <p>
+    So the backend returns the list of comments to the frontend, rendered as HTML and htmx does the work to update the DOM without any fancy frontend frameworks. I think that's pretty cool.
+    </p>
+
+    <h3>Comment storage</h3>
+    <p>
+    One technique I used here to make this easier to develop was I first built the whole thing running locally without any reliance on AWS infrastructure. I generally like to do this if possible when I am using AWS because it makes the feedback loop much, much faster. This is a really basic example of the usefulness of polymorphism, which Clojure multimethods are great for.
+    </p>
+    <p>
+    For example, the <code>get-comments</code> function is a multimethod that dispatches on the <code>:repo</code> value for its first argument:
+    <pre>(defmulti get-comments :repo)</pre>
+    The "local" implementation of this just returns an in-memory vector:
+
+    <pre>(def comments (atom []))
+
+(defn list-comments
+  [post-id]
+  (reverse (filter #(= (:post-id %) post-id) @comments)))
+
+(defmethod repo/get-comments :local
+  [_ post-id]
+  (list-comments post-id))</pre>
+
+    The DynamoDB implementation of this obviously has to do a little more work, and this approach made it was easy to swap that in once I was ready to focus on that part.
+    </p>
+
+    <p>
+
+    <h3> Recaptcha </h3>
     <p>
       I used <a href="https://developers.google.com/recaptcha/docs/v3">Google reCAPTCHA v3</a> in order to try to thwart bot abuse in a way that is not annoying to normal users. reCAPTCHA v3 is nice because it does not require any action on the part of the user- it all happens in the background. When the user tries to save a comment, the frontend submits a reCAPTCHA token with the request. If the reCAPTCHA score is below a certain threshold, the backend responds with an error and doesn't save the comment.
     </p>
 
+    <h3>Closing thoughts</h3>
     <p>
-    All of the AWS configuration for this is nicely packaged up in a <code>serverless.yml</code> file (used by Serverless Framework) so you can easily deploy the whole thing with <code>npx serverless deploy</code>.
+    The DynamoDB table and AWS Lambda configuration are packaged up in a <code>serverless.yml</code> file (used by Serverless Framework) so if you like, you can easily deploy your own instance to your own AWS account.
     </p>
 
     <p>
-      And that's pretty much how it works. Check out the code <a href="https://github.com/NickCellino/nbb-comments">here</a> if you want to dig into the nitty gritty. There's instructions in there for how you can deploy it in your own AWS environment and/or run it locally.
+      And that's pretty much how it works. Check out the code <a href="https://github.com/NickCellino/nbb-comments">here</a> if you want to dig into the nitty gritty. There's instructions in there for how you can deploy it in your own AWS environment and/or run it locally. And check out the end product below.
     </p>
 
     <h2>Leave a comment</h2>
