@@ -25,10 +25,14 @@
       </ul>
     </header>
 
-    <h1>
-      Implementing a comments feature for my blog with nbb, htmx, Serverless Framework, and DynamoDB
-    </h1>
+    <div class="grid-container">
+      <article class="span-7">
+        <h1>
+          Implementing a comments feature for my blog with nbb, htmx, Serverless Framework, and DynamoDB
+        </h1>
+      </article>
 
+      <section class="span-7">
     <p>
     TLDR: here's the repo <a href="https://github.com/NickCellino/nbb-comments">https://github.com/NickCellino/nbb-comments</a>. Usage instructions are in the README. Scroll down to the end of this post to see the comments feature in action.
     </p>
@@ -179,6 +183,8 @@
 
     <h2>Comments</h2>
     <div id="comments-list" hx-get="https://q79hj072qf.execute-api.us-east-1.amazonaws.com/comments?post-id=nbb-comments" hx-swap"innerHTML" hx-trigger="load"></div>
+      </section>
+    </div>
 
   </body>
 </html>

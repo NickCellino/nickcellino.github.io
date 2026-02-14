@@ -102,10 +102,14 @@
       </ul>
     </header>
 
-    <h1>Multi-armed bandits & Clojure</h1>
-    An (interactive) exploration of a classic reinforcement learning problem through the lens of Clojure.
-    <div>
-      <h2>Introduction</h2>
+    <div class="grid-container">
+      <article class="span-7">
+        <h1>Multi-armed bandits & Clojure</h1>
+        <p>An (interactive) exploration of a classic reinforcement learning problem through the lens of Clojure.</p>
+      </article>
+
+      <section class="span-7">
+        <h2>Introduction</h2>
       <p>
       Recently, I've been learning the programming language <a href="https://clojure.org/">Clojure</a>.
 
@@ -130,12 +134,11 @@
       and have some fun.
       </p>
 
-      <p>
-      Let's get started.
-      </p>
-    </div>
-    <div>
-      <h2>Multi-armed Bandit Problem</h2>
+        <p>
+        Let's get started.
+        </p>
+
+        <h2>Multi-armed Bandit Problem</h2>
       <p>
       The problem we will look at is <a href="https://en.wikipedia.org/wiki/Multi-armed_bandit">the multi-armed bandit problem</a>, a classic problem in reinforcement learning. The problem is this:
       </p>
@@ -197,12 +200,11 @@
       use a different strategy entirely.
       </p>
 
-      <p>
-      Let's build a simulation and test one of these strategies out.
-      </p>
-    </div>
-    <div>
-      <h2>Exploring the problem with Clojure</h2>
+        <p>
+        Let's build a simulation and test one of these strategies out.
+        </p>
+
+        <h2>Exploring the problem with Clojure</h2>
 
       <h3>What does a bandit look like?</h3>
       <p>
@@ -513,14 +515,12 @@ my-agent</textarea>
       The agent needs to be more greedy. Try it out for yourself and see if you can find an epsilon value that works better!
       </p>
 
-      <p>
-      Keep in mind, this is only one of many possible strategies for this problem. I would keep going but this post is
-      getting too long.
-      </p>
+        <p>
+        Keep in mind, this is only one of many possible strategies for this problem. I would keep going but this post is
+        getting too long.
+        </p>
 
-    </div>
-    <div>
-      <h2>Conclusion</h2>
+        <h2>Conclusion</h2>
 
       <p>
       I hope the example problem here was a nice showcase of how to use Clojure to solve a 
@@ -561,20 +561,19 @@ my-agent</textarea>
       <p>
       And if you made it this far, thanks for reading!
       </p>
-    </div>
 
-    <div>
       <h2>References</h2>
       <ul>
         <li><a href="https://mitpress.mit.edu/books/reinforcement-learning">Reinforcement Learning: An Introduction (Second Edition)</a></li>
       </ul>
+
+      <h2>Leave a comment</h2>
+      <form id="comment-form" hx-get="https://q79hj072qf.execute-api.us-east-1.amazonaws.com/comments-form?post-id=clojure-bandits" hx-trigger="load"></form>
+
+        <h2>Comments</h2>
+        <div id="comments-list" hx-get="https://q79hj072qf.execute-api.us-east-1.amazonaws.com/comments?post-id=clojure-bandits" hx-swap"innerHTML" hx-trigger="load"></div>
+      </section>
     </div>
-
-    <h2>Leave a comment</h2>
-    <form id="comment-form" hx-get="https://q79hj072qf.execute-api.us-east-1.amazonaws.com/comments-form?post-id=clojure-bandits" hx-trigger="load"></form>
-
-    <h2>Comments</h2>
-    <div id="comments-list" hx-get="https://q79hj072qf.execute-api.us-east-1.amazonaws.com/comments?post-id=clojure-bandits" hx-swap"innerHTML" hx-trigger="load"></div>
 
   </body>
 </html>

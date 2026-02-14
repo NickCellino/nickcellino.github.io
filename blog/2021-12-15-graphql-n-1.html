@@ -24,9 +24,12 @@
       </ul>
     </header>
 
-    <h1>GraphQL, The N+1 Problem, and You</h1>
+    <div class="grid-container">
+      <article class="span-7">
+        <h1>GraphQL, The N+1 Problem, and You</h1>
+      </article>
 
-    <div>
+      <section class="span-7">
       <h2>GraphQL</h2>
       <p>
       Recently, I’ve been learning about <a href="https://graphql.org/">GraphQL</a>. For those who don’t know, GraphQL is a query language for APIs. It essentially allows a frontend to query a backend service as if it were querying a database. This is nice because it lets your frontend request only the data that it needs for each individual page.
@@ -144,6 +147,7 @@ async author(post) {
       <p>
       Personally, I really like GraphQL and think the dataloader pattern is extremely clever and useful. Trying to write code that minimizes the number of SQL queries is often at odds with writing code that is simple to reason about and change. Dataloader provides an API that makes it easy to write code that is <i>reasonably</i> efficient as well as extremely simple and readable.
       </p>
+      </section>
     </div>
   </body>
 </html>

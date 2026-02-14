@@ -24,48 +24,67 @@
         <li class="nav-link"><a href="/">Nick Cellino</a></li>
       </ul>
     </header>
-    
-    <div class="hero-section">
-      <h1>Hi, I'm Nick. I build things, sometimes with software.</h1>
-    </div>
 
-    <div class="content-card">
-      <p>
-      I'm a software engineer based in Buffalo, NY. I build software primarily for the web and primarily on the backend, but I'm always up for a new challenge.
-      </p>
+    <div class="grid-container">
+      <div class="hero-section span-8">
+        <h1>Hi, I'm Nick. <br>I like:<br>* Coding<br>* Pizza<br>* Woodworking</h1>
+      </div>
 
-      <p>
-      I'm a believer in <a href="https://cloud.google.com/architecture/devops">the DevOps movement</a>. I enjoy
-      shipping well-tested code often and figuring out the best processes to accomplish that.
-      </p>
+      <section class="span-8">
+        <p>
+        I'm a software engineer based in Buffalo, NY. I currently work at Hashicorp, building services for our cloud platform in Golang.
+        </p>
 
-      <p>
-      My most recent tech stacks have been:
+        <p>
+        As a software engineer, I value:
+        <ul>
+          <li>Fast iteration times for everything (from development workflows to release schedules)</li>
+          <li>Thoughtful, honest discussion of tradeoffs and not being afraid to question "best practices"</li>
+          <li>Safe releases with feature flags and good rollout strategies</li>
+          <li>Monitors, metrics, dashboards, all that stuff, yeah</li>
+          <li>Good communication among teammates and with stakeholders</li>
+          <li>Good teammates</li>
+        </ul>
+        </p>
 
-      <ul>
-        <li>Typescript, NestJS, GraphQL, PostgreSQL, Serverless Framework, AWS Lambda, Cloudformation</li>
-        <li>Clojure/Clojurescript (just for fun)</li>
-        <li>Python, Django, uWSGI, PostgreSQL, Docker, AWS ECS, Cloudformation</li>
-      </ul>
-      </p>
-    </div>
+        <p>
+        I'm a believer in <a href="https://cloud.google.com/architecture/devops">the DevOps movement</a>. I think it's a great idea for developers to operate the systems they develop. This feels like a no-brainer (typing this in 2026). Not sure I need to convince anyone. I had this on my website a while ago, so I'm gonna keep it here now.
+        </p>
 
-    <div class="content-card">
-      <h2>Blog posts</h2>
-      <ul>
-        <li><a href="/blog/2022-09-03-nbb-comments.html">Implementing a comments feature for my blog with nbb, htmx, Serverless Framework, and DynamoDB</a> (2022-09-03)</li>
-        <li><a href="/blog/2022-08-07-clojure-bandits.html">Multi-armed bandits & Clojure</a> (2022-08-07)</li>
-        <li><a href="/blog/2021-12-15-graphql-n-1.html">GraphQL, The N+1 Problem, and You</a> (2021-12-15)</li>
-      </ul>
-    </div>
+        <p>
+        TypeScript / NestJS / GraphQL / PostgreSQL / Serverless Framework / AWS Lambda / CloudFormation
+        </p>
 
-    <div class="content-card">
-      <h2>Links</h2>
-      <ul>
-        <li><a href="https://github.com/NickCellino">Github</a></li>
-        <li><a href="https://www.linkedin.com/in/nicholas-cellino-353a128a">LinkedIn</a></li>
-        <li hx-get="/email/de5a0d11-2896-4728-a1e0-37c94bc97e97.html" hx-trigger="touchstart, mouseenter, load delay:10s" hx-swap="outerHTML">Email: [Hover over me]</li>
-      </ul>
+        <p>
+        Clojure / ClojureScript
+        </p>
+
+        <p>
+        Python / Django / uWSGI / PostgreSQL / Docker / AWS ECS / CloudFormation
+        </p>
+      </section>
+
+      <hr class="span-8">
+
+      <section class="span-8">
+        <h2>Blog</h2>
+        <ul>
+          <li><a href="/blog/2022-09-03-nbb-comments.html">Implementing a comments feature for my blog with nbb, htmx, Serverless Framework, and DynamoDB</a> <span style="color: #666;">Sep 2022</span></li>
+          <li><a href="/blog/2022-08-07-clojure-bandits.html">Multi-armed bandits & Clojure</a> <span style="color: #666;">Aug 2022</span></li>
+          <li><a href="/blog/2021-12-15-graphql-n-1.html">GraphQL, The N+1 Problem, and You</a> <span style="color: #666;">Dec 2021</span></li>
+        </ul>
+      </section>
+
+      <hr class="span-8">
+
+      <section class="span-8">
+        <h2>Links</h2>
+        <ul>
+          <li><a href="https://github.com/NickCellino">Github</a></li>
+          <li><a href="https://www.linkedin.com/in/nicholas-cellino-353a128a">LinkedIn</a></li>
+          <li hx-get="/email/de5a0d11-2896-4728-a1e0-37c94bc97e97.html" hx-trigger="touchstart, mouseenter, load delay:10s" hx-swap="outerHTML">Email: [Hover over me]</li>
+        </ul>
+      </section>
     </div>
 
   </body>
