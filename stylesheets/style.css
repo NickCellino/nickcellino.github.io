@@ -121,10 +121,34 @@ header {
 .hero-section {
   text-align: left;
   padding: 144px 0;
+  position: relative;
 }
 
 .accent {
   color: #FF4B2B;
+}
+
+/* Swiss Design Geometric Accents */
+.hero-section::before {
+  content: '';
+  position: absolute;
+  width: 280px;
+  height: 480px;
+  background: #00B4D8;
+  top: -120px;
+  right: -48px;
+  z-index: -1;
+}
+
+.hero-section::after {
+  content: '';
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  background: #FFD60A;
+  bottom: -80px;
+  left: -80px;
+  z-index: -1;
 }
 
 /* Content Sections */
@@ -341,5 +365,20 @@ button:hover {
 
   .site-menu {
     padding: 16px 24px;
+  }
+
+  /* Scale geometric accents for mobile */
+  .hero-section::before {
+    width: 140px;
+    height: 280px;
+    right: -24px;
+    top: -60px;
+  }
+
+  .hero-section::after {
+    width: 100px;
+    height: 100px;
+    left: -40px;
+    bottom: -40px;
   }
 }
