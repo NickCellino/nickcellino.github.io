@@ -75,3 +75,13 @@ If you want comments on a post, append this near the end:
 ```
 
 Replace `your-post-id` with the post identifier you want to use for comments.
+
+## RSS Feed
+
+After publishing a new post, add it to `_scripts/bb/generate_rss.clj` and regenerate the feed from the repo root:
+
+```bash
+bb -f _scripts/bb.edn rss
+```
+
+This updates `atom.xml`.
