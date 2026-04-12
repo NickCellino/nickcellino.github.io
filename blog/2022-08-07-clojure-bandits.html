@@ -102,13 +102,12 @@
       </ul>
     </header>
 
-    <div class="grid-container">
-      <article class="span-7">
-        <h1>Multi-armed bandits & Clojure</h1>
-        <p>An (interactive) exploration of a classic reinforcement learning problem through the lens of Clojure.</p>
-      </article>
-
-      <section class="span-7">
+    <main class="post-layout">
+      <article class="post-content">
+        <header class="post-header">
+          <h1>Multi-armed bandits & Clojure</h1>
+          <p class="post-subtitle">An (interactive) exploration of a classic reinforcement learning problem through the lens of Clojure.</p>
+        </header>
         <h2>Introduction</h2>
       <p>
       Recently, I've been learning the programming language <a href="https://clojure.org/">Clojure</a>.
@@ -571,9 +570,9 @@ my-agent</textarea>
       <form id="comment-form" hx-get="https://q79hj072qf.execute-api.us-east-1.amazonaws.com/comments-form?post-id=clojure-bandits" hx-trigger="load"></form>
 
         <h2>Comments</h2>
-        <div id="comments-list" hx-get="https://q79hj072qf.execute-api.us-east-1.amazonaws.com/comments?post-id=clojure-bandits" hx-swap"innerHTML" hx-trigger="load"></div>
-      </section>
-    </div>
+        <div id="comments-list" hx-get="https://q79hj072qf.execute-api.us-east-1.amazonaws.com/comments?post-id=clojure-bandits" hx-swap="innerHTML" hx-trigger="load"></div>
+      </article>
+    </main>
 
   </body>
 </html>
