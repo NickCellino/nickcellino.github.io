@@ -203,19 +203,25 @@ body > header {
 }
 
 .hero-line-soft {
-  color: #111;
+  color: #3A3A3A;
 }
 
 .hero-list-line {
   display: grid;
-  grid-template-columns: 52px 1fr;
+  grid-template-columns: 40px 1fr;
   align-items: baseline;
+  column-gap: 6px;
+}
+
+.hero-list-line > span:last-child {
+  color: #3A3A3A;
 }
 
 .accent {
   display: inline-block;
-  color: #FF4B2B;
-  transform: translateY(2px);
+  color: #FF5A36;
+  transform: translateY(1px) scale(0.92);
+  transform-origin: center;
 }
 
 /* Swiss Design Geometric Accents */
@@ -545,7 +551,8 @@ button:hover {
   }
 
   .hero-list-line {
-    grid-template-columns: 32px 1fr;
+    grid-template-columns: 26px 1fr;
+    column-gap: 4px;
   }
 
   .site-menu {
